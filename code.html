@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Code Editor</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="code.css">
+</head>
+<body>
+
+    <!-- Top bar with Code Editor title on the left and Home button on the right -->
+    <div class="top-bar">
+        <div class="title">Code Editor</div>
+        <div class="home-btn">
+            <a href="interface.html"><button id="home-btn"><i class="fas fa-home"></i></button></a>
+        </div>
+    </div>
+
+    <!-- Main editor containers -->
+    <div class="container">
+        <div class="editors">
+            <!-- HTML Editor -->
+            <div class="editor-container">
+                <div class="editor-heading">
+                    <i class="fab fa-html5 icon-html"></i> 
+                    <span class="editor-title">HTML</span>
+                    <button class="copy-btn" onclick="copyCode('htmlEditor')"><i class="fas fa-copy"></i></button>
+                </div>
+                <textarea id="htmlEditor" ></textarea>
+            </div>
+            
+            <!-- CSS Editor -->
+            <div class="editor-container">
+                <div class="editor-heading">
+                    <i class="fab fa-css3-alt icon-css"></i> 
+                    <span class="editor-title">CSS</span>
+                    <button class="copy-btn" onclick="copyCode('cssEditor')"><i class="fas fa-copy"></i></button>
+                </div>
+                <textarea id="cssEditor" ></textarea>
+            </div>
+
+            <!-- JavaScript Editor -->
+            <div class="editor-container">
+                <div class="editor-heading">
+                    <i class="fab fa-js icon-js"></i> 
+                    <span class="editor-title">JS</span>
+                    <button class="copy-btn" onclick="copyCode('jsEditor')"><i class="fas fa-copy"></i></button>
+                </div>
+                <textarea id="jsEditor" ></textarea>
+            </div>
+        </div>
+
+        <!-- Output section -->
+        <div class="output-container">
+            <div class="output-heading">
+                <i class="fas fa-play icon-output"></i> 
+                <span class="output-title">Output</span>
+                <button id="fullscreen-btn" onclick="toggleFullScreen()"><i class="fas fa-expand"></i></button>
+            </div>
+            <iframe id="output" srcdoc=""></iframe>
+        </div>
+    </div>
+
+    <script src="code.js"></script>
+</body>
+</html>

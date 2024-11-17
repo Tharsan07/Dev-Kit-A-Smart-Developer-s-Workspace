@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Text & Voice Assistant</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    body {
+      background-image: url("AI-Chatbot.jpg");
+      background-repeat: no-repeat;
+      background-size: cover;
+      display: flex;
+      flex-direction: column;
+      font-family: Arial, sans-serif;
+      background-color: #0d0d33;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+    }
+    
+    h1 {
+      color: #E5E5EA;
+      text-align: center; /* Centering the heading */
+    }
+    
+    .chat-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      margin: 20px;
+      margin-bottom: 100px; /* Space for the fixed input container */
+      animation: slideInDown 0.5s ease; /* Chat container animation */
+    }
+    
+    .message {
+      margin-bottom: 10px;
+      max-width: 70%;
+      word-wrap: break-word;
+      animation: fadeIn 0.5s ease; /* Message animation */
+    }
+    
+    .user-message {
+      align-self: flex-end;
+      background-color: #DCF8C6;
+      border-radius: 10px;
+      padding: 10px;
+    }
+    
+    .bot-message {
+      align-self: flex-start;
+      background-color: #E5E5EA;
+      border-radius: 10px;
+      padding: 15px;
+    }
+    
+    .input-container {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      display: flex;
+      align-items: center;
+      background-color: rgba(255, 255, 255, 0.8); /* Slightly transparent background */
+      border-radius: 10px;
+      margin: 20px;
+      padding: 10px;
+      box-shadow: 0px -2px 10px rgba(0, 0, 0, 0.1); /* Floating effect */
+      z-index: 100; /* Stay on top of other elements */
+      animation: slideInUp 0.5s ease; /* Input container animation */
+    }
+    
+    .input-box {
+      flex: 1;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      resize: none;
+      animation: fadeIn 0.5s ease; /* Input box animation */
+    }
+    
+    .send-button {
+      margin-left: 10px;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 5px;
+      background-color: #2f80f1;
+      color: white;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    
+    .send-button:hover {
+      background-color: #06b457;
+    }
+    
+    .icon-button {
+      margin-left: 10px;
+      padding: 10px;
+      border: none;
+      border-radius: 5%;
+      background-color: #086bf6;
+      color: white;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+      font-size: 20px; /* Increase icon size */
+    }
+    
+    .icon-button:hover {
+      background-color: #05f88b;
+    }
+  </style>
+</head>
+<body>
+  <h1 class="Heading">AI Voice Assistant</h1>
+  <div class="chat-container" id="chat-container"></div>
+  <div class="input-container">
+    <textarea id="user-input" class="input-box" placeholder="How can I assist you?"></textarea>
+    <button class="send-button" onclick="callGeminiAPI()">Send</button>
+    <button class="icon-button" id="mic-button" onclick="startListening()">
+      <i class="fas fa-microphone"></i>
+    </button>
+    <button class="icon-button" id="stop-button" onclick="stopVoice()" style="display: none;">
+      <i class="fas fa-stop"></i>
+    </button>
+  </div>
+
+  <script>
+    // Web Speech API: Speech Recognition
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const recognition = new SpeechRecognition();
+    recognition.continuous = false;
+    recognition.interimResults = false;
+
+    recognition.onresult = function(event) {
+      const transcript = event.results[0][0].transcript;
+      document.getElementById('user-input').value = transcript;
+      callGeminiAPI(); // Automatically send after voice input
+    };
+
+    function startListening() {
+      recognition.start();
+      document.getElementById('mic-button').style.display = 'none';
+      document.getElementById('stop-button').style.display = 'inline-block';
+    }
+
+    // Web Speech API: Speech Synthesis
+    function speak(text) {
+      const speech = new SpeechSynthesisUtterance(text);
+      speech.pitch = 1;
+      speech.rate = 1;
+      speech.volume = 1;
+      window.speechSynthesis.speak(speech);
+    }
+
+    // Function to stop voice output
+    function stopVoice() {
+      window.speechSynthesis.cancel(); // Stop any ongoing speech
+      recognition.stop();
+      document.getElementById('mic-button').style.display = 'inline-block';
+      document.getElementById('stop-button').style.display = 'none';
+    }
+
+    // API and Chat Functionality
+    function callGeminiAPI() {
+      const apiUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=AIzaSyDumLLaIewZ7KLFiABbWq64PcxtvcmNI2Y";
+      const userInput = document.getElementById('user-input').value.trim(); // Trim whitespace
+      const outputBox = document.getElementById('chat-container');
+
+      if (!userInput) {
+        alert("Please enter some text.");
+        return;
+      }
+
+      // Append user message to the chat container
+      outputBox.innerHTML += `<div class="message user-message">${userInput}</div>`;
+
+      fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          "contents": [{
+            "parts": [{
+              "text": userInput
+            }]
+          }]
+        })
+      })
+      .then(response => response.json())
+      .then(data => {
+        let responseText = data.candidates[0].content.parts[0].text;
+
+        if (countWords(responseText) > 100) {
+          responseText = responseText.split(" ").slice(0, 100).join(" ") + "...";
+        }
+
+        outputBox.innerHTML += `<div class="message bot-message">${responseText}</div>`;
+        outputBox.scrollTop = outputBox.scrollHeight;
+
+        // Make the bot speak the response
+        speak(responseText);
+      })
+      .catch(error => {
+        alert("Error: " + error.message);
+      });
+
+      document.getElementById('user-input').value = "";
+    }
+
+    // Utility function to count words
+    function countWords(str) {
+      return str.trim().split(/\s+/).length;
+    }
+  </script>
+</body>
+</html>

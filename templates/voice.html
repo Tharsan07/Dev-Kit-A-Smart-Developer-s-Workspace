@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Text and Voice Assistant</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
+  <style>
+    /* Style similar to the design from earlier */
+    body, html {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      background-color: #0d0d33;
+    }
+    .chat-container {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      overflow-y: auto;
+      margin: 20px;
+    }
+    .message {
+      margin-bottom: 10px;
+      max-width: 70%;
+      word-wrap: break-word;
+    }
+    .user-message {
+      align-self: flex-end;
+      background-color: #DCF8C6;
+      border-radius: 10px;
+      padding: 10px;
+    }
+    .bot-message {
+      align-self: flex-start;
+      background-color: #E5E5EA;
+      border-radius: 10px;
+      padding: 15px;
+    }
+    .input-container {
+      display: flex;
+      align-items: center;
+      padding: 10px;
+      background-color: #ffffff;
+      border-radius: 10px;
+      margin: 20px;
+    }
+    .input-box {
+      flex: 1;
+      padding: 10px;
+      border: 1px solid #cccccc;
+      border-radius: 5px;
+      height: 50px;
+      font-size: 16px;
+    }
+    .send-button, .voice-button, .stop-button {
+      margin-left: 10px;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      color: white;
+    }
+    .send-button {
+      background-color: #2f80f1;
+    }
+    .send-button:hover {
+      background-color: #06b457;
+    }
+    .voice-button {
+      background-color: #f0932b;
+    }
+    .voice-button:hover {
+      background-color: #ffbe76;
+    }
+    .stop-button {
+      background-color: red;
+    }
+    .stop-button:hover {
+      background-color: #ff3333;
+    }
+  </style>
+</head>
+<body>
+
+  <h1 style="color: #E5E5EA; text-align: center;">Text and Voice Assistant</h1>
+
+  <div class="chat-container" id="chat-container">
+    <!-- Chat messages will appear here -->
+  </div>
+
+  <div class="input-container">
+    <textarea id="user-input" class="input-box" placeholder="Type your query here..."></textarea>
+    <button class="send-button" onclick="sendQuery()">Send</button>
+    <button class="voice-button" onclick="startVoiceRecognition()">🎤 Voice</button>
+    <button class="stop-button" onclick="stopResponse()">🛑 Stop</button>
+  </div>
+
+  <script>
+    let isStopped = false; // Flag to track if user has stopped the response
+
+    function sendQuery() {
+      const userInput = document.getElementById('user-input').value.trim();
+      isStopped = false; // Reset the stop flag
+
+      if (!userInput) {
+        alert('Please enter some text or speak your query.');
+        return;
+      }
+
+      // Append user input to the chat
+      const chatContainer = document.getElementById('chat-container');
+      chatContainer.innerHTML += `<div class="message user-message">${userInput}</div>`;
+
+      // Make a POST request to the Flask backend
+      fetch('/generate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ user_input: userInput })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.response) {
+          // Append the bot response to the chat if the stop flag is not set
+          if (!isStopped) {
+            chatContainer.innerHTML += `<div class="message bot-message">${data.response}</div>`;
+            speakText(data.response);
+          }
+        } else if (data.error) {
+          // Display error message
+          chatContainer.innerHTML += `<div class="message bot-message">Error: ${data.error}</div>`;
+        }
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+      })
+      .catch(error => {
+        chatContainer.innerHTML += `<div class="message bot-message">Error: ${error.message}</div>`;
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+      });
+
+      // Clear the input box
+      document.getElementById('user-input').value = '';
+    }
+
+    function speakText(text) {
+      const synth = window.speechSynthesis;
+      const utterThis = new SpeechSynthesisUtterance(text);
+      
+      // Cancel speech synthesis if the stop flag is set
+      utterThis.onstart = function () {
+        if (isStopped) {
+          synth.cancel();
+        }
+      };
+
+      synth.speak(utterThis);
+    }
+
+    function startVoiceRecognition() {
+      if (!('webkitSpeechRecognition' in window)) {
+        alert('Sorry, your browser does not support speech recognition.');
+        return;
+      }
+
+      const recognition = new webkitSpeechRecognition();
+      recognition.lang = 'en-US';
+      recognition.continuous = false;
+      recognition.interimResults = false;
+
+      recognition.onstart = function () {
+        console.log('Voice recognition started.');
+      };
+
+      recognition.onresult = function (event) {
+        const voiceInput = event.results[0][0].transcript;
+        document.getElementById('user-input').value = voiceInput;
+
+        // Automatically send the query once speech input is recognized
+        sendQuery();
+      };
+
+      recognition.onerror = function (event) {
+        alert('Error occurred in recognition: ' + event.error);
+      };
+
+      recognition.onend = function () {
+        console.log('Voice recognition ended.');
+      };
+
+      recognition.start();
+    }
+
+    function stopResponse() {
+      // Set the flag to true, which will stop the response generation
+      isStopped = true;
+      // Cancel any ongoing speech synthesis
+      window.speechSynthesis.cancel();
+      alert('Response generation stopped.');
+    }
+  </script>
+
+</body>
+</html>

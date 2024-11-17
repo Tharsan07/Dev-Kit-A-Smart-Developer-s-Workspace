@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Code Explainer Tool</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(to right, #e1e1e1, #ffffff);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            animation: fadeIn 1s;
+            color: #333;
+            position: relative; /* Added to position the Home button */
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .container {
+            width: 95%;
+            max-width: 900px;
+            display: flex;
+            gap: 30px;
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+        }
+
+        .home-button {
+            position: absolute; /* Positioning the button in the top-right corner */
+            top: 20px;
+            right: 20px;
+            padding: 10px 15px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+
+        .home-button:hover {
+            background-color: #2980b9;
+            transform: scale(1.05);
+        }
+
+        h1 {
+            text-align: center;
+            color: #34495e;
+            margin-bottom: 20px;
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        .input-area, .output-area {
+            flex: 1;
+            border: 1px solid #3498db;
+            border-radius: 8px;
+            padding: 15px;
+            background-color: #f9f9f9;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            transition: background-color 0.3s, transform 0.3s;
+        }
+
+        .input-area:hover, .output-area:hover {
+            background-color: #ecf0f1;
+            transform: scale(1.02);
+        }
+
+        textarea {
+            width: 100%;
+            height: 150px;
+            padding: 10px;
+            font-size: 14px;
+            margin-bottom: 15px;
+            border: 1px solid #3498db;
+            border-radius: 6px;
+            background-color: #ffffff;
+            font-family: monospace;
+            transition: border-color 0.3s;
+        }
+
+        textarea:focus {
+            border-color: #2980b9;
+            outline: none;
+        }
+
+        select, button {
+            width: 100%;
+            padding: 10px;
+            font-size: 14px;
+            margin-bottom: 15px;
+            border-radius: 6px;
+            border: 1px solid #3498db;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+
+        select {
+            background-color: #ffffff;
+        }
+
+        button {
+            background-color: #2ecc71;
+            color: white;
+            font-weight: bold;
+            border: none;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+
+        button:hover {
+            background-color: #27ae60;
+            transform: scale(1.05);
+        }
+
+        .output-area {
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeInUp 0.5s forwards;
+        }
+
+        @keyframes fadeInUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        #explanation {
+            padding: 15px;
+            background-color: #ffffff;
+            border-left: 5px solid #27ae60;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            border-radius: 6px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            font-size: 14px;
+            line-height: 1.5;
+            color: #333;
+            max-height: 300px;
+            overflow-y: auto; /* Enables scrolling for long explanations */
+        }
+
+        .copy-button-container {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 10px;
+        }
+
+        #copyBtn {
+            background-color: #3498db;
+            color: white;
+            font-weight: bold;
+            border: none;
+            padding: 10px 20px;
+            transition: background-color 0.3s;
+        }
+
+        #copyBtn:hover {
+            background-color: #2980b9;
+        }
+    </style>
+</head>
+<body>
+    
+    <button class="home-button" onclick="goHome()">Home</button> <!-- Home Button -->
+
+    <div class="container">
+        <div class="input-area">
+            <h1>Code Explainer</h1>
+            <textarea id="codeInput" placeholder="Paste your HTML, CSS, or JavaScript code here..."></textarea>
+            <select id="languageSelect">
+                <option value="html">HTML</option>
+                <option value="css">CSS</option>
+                <option value="javascript">JavaScript</option>
+            </select>
+            <button id="explainBtn">Explain Code</button>
+        </div>
+        <div class="output-area">
+            <div id="explanation"></div>
+            <div class="copy-button-container">
+                <button id="copyBtn">Copy📋</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('explainBtn').addEventListener('click', function() {
+            let code = document.getElementById('codeInput').value.trim();
+            let language = document.getElementById('languageSelect').value;
+            let explanation = document.getElementById('explanation');
+
+            if (!code) {
+                explanation.innerHTML = 'Please enter some code to be explained.';
+                explanation.style.opacity = '1'; // Show message immediately
+                return;
+            }
+
+            let output = explainCode(code, language);
+            explanation.innerHTML = output; // Display explanation
+            explanation.style.opacity = '1'; // Make explanation visible
+        });
+
+        function explainCode(code, language) {
+            let explanation = '';
+            explanation += explainProgramStructure(code, language);
+
+            switch (language) {
+                case 'html':
+                    explanation += explainHTML(code);
+                    break;
+                case 'css':
+                    explanation += explainCSS(code);
+                    break;
+                case 'javascript':
+                    explanation += explainJavaScript(code);
+                    break;
+                default:
+                    explanation = 'Unsupported language selected.';
+            }
+            return explanation || 'No recognizable code patterns found.';
+        }
+
+        function explainProgramStructure(code, language) {
+            let explanation = "Overall Program Explanation:\n";
+
+            if (language === 'html') {
+                explanation += "This is an HTML document that structures the webpage. It defines various sections such as headings, paragraphs, links, images, forms, and other content. The HTML serves as the skeleton of the webpage.\n";
+            } else if (language === 'css') {
+                explanation += "This code defines CSS styling, which is responsible for the visual design of the webpage. It adjusts the layout, colors, spacing, fonts, and the overall look and feel.\n";
+            } else if (language === 'javascript') {
+                explanation += "This code contains JavaScript, which is responsible for adding interactivity and dynamic behavior to the webpage. It listens to user events, modifies HTML elements, and processes data based on user input or other conditions.\n";
+            }
+
+            explanation += "\nKey Sections in the Program:\n";
+            return explanation;
+        }
+
+        function explainHTML(code) {
+            let explanation = "HTML Detailed Explanation: \n";
+            
+            const htmlTags = [
+                { tag: '<div', desc: 'Defines a division or section in an HTML document.' },
+                { tag: '<span', desc: 'Used to group inline-elements in a document.' },
+                { tag: '<h1>', desc: 'Defines HTML headings from <h1> to <h6>. <h1> is the largest.' },
+                { tag: '<p>', desc: 'Defines a paragraph.' },
+                { tag: '<a ', desc: 'Defines a hyperlink with the "href" attribute.' },
+                { tag: '<img ', desc: 'Embeds an image using the "src" attribute.' },
+                { tag: '<ul>', desc: 'Creates an unordered (bulleted) list.' },
+                { tag: '<ol>', desc: 'Creates an ordered (numbered) list.' },
+                { tag: '<li>', desc: 'Defines a list item within <ul> or <ol>.' },
+                { tag: '<table>', desc: 'Defines a table, with rows (<tr>), headers (<th>), and cells (<td>).' },
+                { tag: '<form>', desc: 'Defines an HTML form for user input.' }
+            ];
+
+            htmlTags.forEach(tag => {
+                explanation += `${tag.tag}: ${tag.desc}\n`;
+            });
+
+            return explanation;
+        }
+
+        // Placeholder functions for CSS and JavaScript explanations
+        function explainCSS(code) {
+            return "CSS Detailed Explanation: \nThis section explains how CSS is used to style the HTML elements.";
+        }
+
+        function explainJavaScript(code) {
+            return "JavaScript Detailed Explanation: \nThis section explains how JavaScript adds interactivity and functionality to the webpage.";
+        }
+
+        // Copy to clipboard function
+        document.getElementById('copyBtn').addEventListener('click', function() {
+            let explanationText = document.getElementById('explanation').innerText;
+            navigator.clipboard.writeText(explanationText).then(() => {
+                alert('Explanation copied to clipboard!');
+            }).catch(err => {
+                console.error('Could not copy text: ', err);
+            });
+        });
+
+        // Function to redirect to home
+        function goHome() {
+            window.location.href = '/'; // Change to your desired home URL
+        }
+    </script>
+</body>
+</html>
